@@ -88,7 +88,7 @@ else
 fi
 
 echo "Adding Docker repository..."
-$DNF_CMD config-manager addrepo --from-repofile="https://download.docker.com/linux/fedora/docker-ce.repo" || { echo "Failed to add Docker repo."; exit 1; }
+$DNF_CMD config-manager addrepo --overwrite --from-repofile='https://download.docker.com/linux/fedora/docker-ce.repo' || { echo "Failed to add Docker repo."; exit 1; }
 
 echo "Installing Docker CE and related packages..."
 dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || { echo "Failed to install Docker."; exit 1; }
