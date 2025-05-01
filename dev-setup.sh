@@ -69,13 +69,11 @@ echo "Installing Python3 and pip..."
 dnf install -y python3 python3-pip || { echo "Failed to install Python3/pip."; exit 1; }
 
 # 6. Install JDK 21 (OpenJDK)
-read -p "Do you want to install JDK 21 from OpenJDK ? (y/N) " proceed
-if [[ ! "$proceed" =~ ^[Yy] ]]; then
-    echo "Aborted by user."
-    exit 1
+read -p "Do you want to install JDK 21 from OpenJDK ? (y/N) " jdk
+if [[ "$jdk" =~ ^[Yy] ]]; then
+    echo "Installing OpenJDK 21..."
+    dnf install -y java-21-openjdk java-21-openjdk-devel || { echo "Failed to install OpenJDK 21."; exit 1; }
 fi
-echo "Installing OpenJDK 21..."
-dnf install -y java-21-openjdk java-21-openjdk-devel || { echo "Failed to install OpenJDK 21."; exit 1; }
 
 # 7. Install GCC and G++
 echo "Installing GCC and G++..."
