@@ -76,12 +76,6 @@ fi
 echo "Installing GCC and G++..."
 dnf install -y gcc gcc-c++ || { echo "Failed to install GCC/G++."; exit 1; }
 
-# Optional: Development tools (make, etc.)
-read -p "Install additional development tools (make, etc.)? (y/N) " devtools
-if [[ "$devtools" =~ ^[Yy] ]]; then
-    echo "Installing Development Tools group..."
-    dnf group install "Development Tools" || { echo "Failed to install Development Tools."; exit 1; }
-fi
 
 # 8. Install Docker
 echo "Setting up Docker repository..."
