@@ -45,10 +45,7 @@ dnf install -y code || { echo "Failed to install VS Code."; exit 1; }
 
 # 3. Install Brave browser via official RPM repo
 echo "Setting up Brave browser repository..."
-dnf install -y dnf-plugins-core || { echo "Failed to install dnf-plugins-core for Brave."; exit 1; }
-dnf config-manager --add-repo https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo || { echo "Failed to add Brave repo."; exit 1; }
-echo "Installing Brave browser..."
-dnf install -y brave-browser || { echo "Failed to install Brave browser."; exit 1; }
+curl -fsS https://dl.brave.com/install.sh | sh || { echo "Failed to install Brave browser."; exit 1; }
 
 # 4. Install Node.js LTS via NVM and Yarn
 echo "Installing NVM (Node Version Manager)..."
