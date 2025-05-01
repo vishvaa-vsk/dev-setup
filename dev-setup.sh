@@ -56,8 +56,8 @@ export NVM_DIR="$HOME/.nvm"
 # shellcheck disable=SC1090
 source "$NVM_DIR/nvm.sh"
 echo "Installing Node.js LTS..."
-nvm install --lts || { echo "Failed to install Node.js LTS."; exit 1; }
-nvm use --lts
+nvm install 22 || { echo "Failed to install Node.js LTS."; exit 1; }
+nvm use 22
 echo "Installing Yarn globally..."
 npm install -g yarn || { echo "Failed to install Yarn."; exit 1; }
 
