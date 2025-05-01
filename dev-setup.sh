@@ -80,9 +80,19 @@ dnf install -y gcc gcc-c++ || { echo "Failed to install GCC/G++."; exit 1; }
 # 8. Install Docker
 echo "Setting up Docker repository..."
 dnf install -y dnf-plugins-core || { echo "Failed to install dnf-plugins-core for Docker."; exit 1; }
-dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo || { echo "Failed to add Docker repo."; exit 1; }
+
+if command -v dnf5 &> /dev/null; then
+    DNF_CMD="dnf5"
+else
+    DNF_CMD="dnf"
+fi
+
+echo "Adding Docker repository..."
+$DNF_CMD config-manager addrepo https://download.docker.com/linux/fedora/docker-ce.repo || { echo "Failed to add Docker repo."; exit 1; }
+
 echo "Installing Docker CE and related packages..."
 dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || { echo "Failed to install Docker."; exit 1; }
+
 echo "Enabling and starting Docker service..."
 systemctl enable --now docker || { echo "Failed to start Docker."; exit 1; }
 
