@@ -1,6 +1,6 @@
 # Fedora Dev + Hyprland Setup
 
-This repository provides an automated script to set up a development environment and Hyprland desktop on Fedora (tested on Fedora 42+).
+This repository provides an automated script to set up a development environment and Hyprland desktop on Fedora everything (tested on Fedora 42+).
 
 ## Features
 
