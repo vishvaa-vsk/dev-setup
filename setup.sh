@@ -29,7 +29,7 @@ dnf -y update
 
 # Core tools
 info "Installing base tools..."
-dnf install -y git curl wget gnupg2 unzip tar || error "Core tools install failed."
+dnf install -y git curl wget gnupg2 unzip tar ssh || error "Core tools install failed."
 
 # VSCode
 info "Setting up VS Code..."
