@@ -166,5 +166,40 @@ systemctl daemon-reexec
 systemctl enable --now systemd-zram-setup@zram0.service
 systemctl restart systemd-zram-setup@zram0.service
 
+# Zsh with Oh My Zsh setup
+read -p "Install Zsh with Oh My Zsh? (y/N): " install_zsh
+if [[ "$install_zsh" =~ ^[Yy]$ ]]; then
+    info "Installing Zsh..."
+    dnf install -y zsh || error "Zsh installation failed."
+    
+    # Install Oh My Zsh for the target user
+    info "Installing Oh My Zsh for $TARGET_USER..."
+    su - "$TARGET_USER" -c 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended' || warn "Oh My Zsh installation failed!"
+    
+    # Install popular plugins
+    info "Installing useful Zsh plugins..."
+    
+    # zsh-syntax-highlighting
+    su - "$TARGET_USER" -c 'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting' || warn "zsh-syntax-highlighting installation failed!"
+    
+    
+    # powerlevel10k theme (popular theme with nice features)
+    su - "$TARGET_USER" -c 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k' || warn "powerlevel10k theme installation failed!"
+    
+    # Update .zshrc to use the plugins and theme
+    su - "$TARGET_USER" -c 'sed -i "s/ZSH_THEME=.*/ZSH_THEME=\"powerlevel10k\/powerlevel10k\"/" ~/.zshrc'
+    su - "$TARGET_USER" -c 'sed -i "s/plugins=(git)/plugins=(git zsh-syntax-highlighting)/" ~/.zshrc'
+
+    # Set Zsh as default shell for the user
+    read -p "Set Zsh as the default shell for $TARGET_USER? (y/N): " set_zsh_default
+    if [[ "$set_zsh_default" =~ ^[Yy]$ ]]; then
+        info "Setting Zsh as default shell for $TARGET_USER..."
+        chsh -s /bin/zsh "$TARGET_USER" || warn "Failed to change default shell to Zsh!"
+        success "Zsh is now the default shell for $TARGET_USER!"
+        info "You'll need to log out and back in for the shell change to take effect."
+    fi
+    
+    success "Zsh with Oh My Zsh has been installed successfully!"
+fi
 
 success "All setup complete! Please reboot your system to apply all changes."
