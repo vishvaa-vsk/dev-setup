@@ -62,8 +62,7 @@ ACTUAL_USER=${SUDO_USER:-$USER}
 
 # Create temp directory
 TEMP_DIR=$(mktemp -d)
-trap 'echo "Cleaning up..."; [[ $NO_CLEANUP -eq 0 ]] && rm -rf "$TEMP_DIR"' EXIT
-cd "$TEMP_DIR" || exit 1
+trap 'echo "Cleaning up..."; [[ $NO_CLEANUP -eq 0 ]] && rm -rf "$TEMP_DIR"' EXIT INT TERM
 
 info "Downloading setup scripts from repository..."
 
@@ -82,10 +81,9 @@ done
 success "All scripts downloaded successfully."
 info "Running main setup script..."
 
-# Run the main setup script
-bash setup.sh
-
-# Keep the scripts if requested
+# Run the main setup script with all arguments passed through
+# Use exec to replace the current process, preventing the trap cleanup from running prematurely
+cd "$TEMP_DIR" || exit 1
 if [[ $NO_CLEANUP -eq 1 ]]; then
     USER_HOME=$(eval echo ~${ACTUAL_USER})
     mkdir -p "$USER_HOME/dev-setup-scripts" 2>/dev/null || true
@@ -94,4 +92,5 @@ if [[ $NO_CLEANUP -eq 1 ]]; then
     success "Scripts saved to $USER_HOME/dev-setup-scripts/"
 fi
 
-success "Setup complete!"
+# Execute the main setup script and let it run to completion
+exec bash setup.sh
