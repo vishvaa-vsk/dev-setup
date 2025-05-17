@@ -80,7 +80,17 @@ read -p "Install OpenJDK 21? (y/N): " jdk
 read -p "Install Android development environment? (y/N): " android_dev
 if [[ "$android_dev" =~ ^[Yy]$ ]]; then
     info "Setting up Android development environment..."
-    su - "$TARGET_USER" -c "bash \"$(dirname "$0")/setup_android_dev.sh\"" || warn "Android setup failed!"
+    SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+    ANDROID_SCRIPT="$SCRIPT_DIR/setup_android_dev.sh"
+    
+    # Copy script to user's home directory temporarily to ensure it's accessible
+    cp "$ANDROID_SCRIPT" "/home/$TARGET_USER/setup_android_dev_temp.sh"
+    chmod +x "/home/$TARGET_USER/setup_android_dev_temp.sh"
+    
+    su - "$TARGET_USER" -c "bash /home/$TARGET_USER/setup_android_dev_temp.sh" || warn "Android setup failed!"
+    
+    # Clean up temporary script
+    rm -f "/home/$TARGET_USER/setup_android_dev_temp.sh"
 fi
 
 # GCC & G++
