@@ -66,31 +66,38 @@ trap 'echo "Cleaning up..."; [[ $NO_CLEANUP -eq 0 ]] && rm -rf "$TEMP_DIR"' EXIT
 
 info "Downloading setup scripts from repository..."
 
+# First change to the temp directory
+cd "$TEMP_DIR" || exit 1
+
 # Download all required scripts
 BASE_URL="https://raw.githubusercontent.com/vishvaa-vsk/dev-setup/main"
 SCRIPTS=("setup.sh" "setup_android_dev.sh" "setup_node_dev.sh" "setup_python_dev.sh")
 
 for script in "${SCRIPTS[@]}"; do
     info "Downloading $script..."
-    if ! curl -fsSL "$BASE_URL/$script" -o "$script"; then
+    if ! curl -fsSL "$BASE_URL/$script" -o "$TEMP_DIR/$script"; then
         error "Failed to download $script. Please check your internet connection and try again."
     fi
-    chmod +x "$script"
+    chmod +x "$TEMP_DIR/$script"
 done
+
+# Verify that setup.sh exists
+if [[ ! -f "$TEMP_DIR/setup.sh" ]]; then
+    error "Critical error: setup.sh was not downloaded correctly. Please check your internet connection and try again."
+fi
 
 success "All scripts downloaded successfully."
 info "Running main setup script..."
 
-# Run the main setup script with all arguments passed through
-# Use exec to replace the current process, preventing the trap cleanup from running prematurely
-cd "$TEMP_DIR" || exit 1
+# Keep the scripts if requested
 if [[ $NO_CLEANUP -eq 1 ]]; then
     USER_HOME=$(eval echo ~${ACTUAL_USER})
     mkdir -p "$USER_HOME/dev-setup-scripts" 2>/dev/null || true
-    cp -f ./* "$USER_HOME/dev-setup-scripts/"
+    cp -f "$TEMP_DIR"/* "$USER_HOME/dev-setup-scripts/"
     chown -R "$ACTUAL_USER:$(id -gn "$ACTUAL_USER")" "$USER_HOME/dev-setup-scripts/"
     success "Scripts saved to $USER_HOME/dev-setup-scripts/"
 fi
 
-# Execute the main setup script and let it run to completion
-exec bash setup.sh
+# Execute the main setup script with the full path to ensure it's found
+info "Executing: bash $TEMP_DIR/setup.sh"
+exec bash "$TEMP_DIR/setup.sh"
