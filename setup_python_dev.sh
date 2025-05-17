@@ -21,52 +21,15 @@ printf "\n========================================================"
 printf "\n=== Python Development Environment Setup Script ========"
 printf "\n========================================================\n"
 
-# Install system Python
-info "Installing system Python 3..."
+# Check if running as root
 if [ "$(id -u)" -ne 0 ]; then
     error "Please run this script as root or with sudo to install packages."
 fi
 
-# Install Python 3 from the distribution's repository
-dnf install -y python3 python3-pip || error "Python install failed."
-success "System Python installed successfully."
-
-# Check for required dependencies for pyenv
-required_pkgs="curl git gcc make zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel tk-devel libffi-devel xz-devel"
-
-printf "\nChecking pyenv dependencies...\n"
-missing_pkgs=""
-
-# Check the main required packages
-for pkg in $required_pkgs; do
-    base_pkg=${pkg%%-devel}
-    if ! rpm -q $base_pkg &>/dev/null; then
-        missing_pkgs="$missing_pkgs $pkg"
-    fi
-done
-
-if [ -n "$missing_pkgs" ]; then
-    printf "Missing dependencies:$missing_pkgs\n"
-    printf "Installing pyenv dependencies...\n"
-    dnf install -y --skip-unavailable $missing_pkgs
-    
-    # Check if critical packages were installed
-    critical_failure=0
-    for pkg in curl git gcc make; do
-        if ! rpm -q $pkg &>/dev/null; then
-            printf "Critical package $pkg failed to install!\n"
-            critical_failure=1
-        fi
-    done
-    
-    if [ $critical_failure -eq 1 ]; then
-        printf "Failed to install critical packages. pyenv might not work properly.\n"
-    else
-        printf "Dependencies installed successfully.\n"
-    fi
-else
-    printf "All dependencies are installed.\n"
-fi
+# Install system Python and pyenv dependencies all at once
+info "Installing system Python and pyenv dependencies..."
+dnf install -y --skip-unavailable python3 python3-pip curl git gcc make zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel tk-devel libffi-devel xz-devel || error "Package installation failed."
+success "System Python and dependencies installed successfully."
 
 # Install pyenv
 info "Setting up Pyenv for Python version management..."

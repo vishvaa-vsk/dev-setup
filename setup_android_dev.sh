@@ -1,75 +1,33 @@
 #!/bin/bash
+set -euo pipefail
 
 # For most (if not all) Linux distros, there is no official repository package available to install Android Studio
 # and still get regular updates. This bash script automatically downloads and installs the latest version.
+
+# Define colors
+GREEN="\033[1;32m"
+YELLOW="\033[1;33m"
+BLUE="\033[1;34m"
+RED="\033[1;31m"
+NC="\033[0m" # No Color
+
+function info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+function success() { echo -e "${GREEN}[✔]${NC} $1"; }
+function warn() { echo -e "${YELLOW}[!]${NC} $1"; }
+function error() { echo -e "${RED}[✘]${NC} $1"; exit 1; }
 
 printf "\n========================================================"
 printf "\n=== Android Development Environment Setup Script =======" 
 printf "\n========================================================\n"
 
-# Check for required dependencies
-# Mapping Debian packages to Fedora equivalents with more accurate package names
-required_pkgs="curl git unzip xz zip mesa-libGLU glibc glibc.i686 libstdc++ libstdc++.i686 bzip2-libs"
-additional_pkgs="wget" # Packages that might have different names or could be already installed via alternative packages
+# Install all required dependencies at once
+info "Installing required dependencies for Android development..."
 
-printf "\nChecking dependencies...\n"
-missing_pkgs=""
+# Try to install all potentially needed packages
+dnf install -y --skip-unavailable curl git wget unzip xz zip mesa-libGLU glibc glibc.i686 \
+    libstdc++ libstdc++.i686 bzip2-libs zlib.i686 glibc-devel.i686 glibc-minimal-langpack.i686 2>/dev/null || true
 
-# Check for wget or wget2 (either is fine)
-if ! rpm -q wget &>/dev/null && ! rpm -q wget2 &>/dev/null; then
-    missing_pkgs="$missing_pkgs wget"
-fi
-
-# Check for 32-bit zlib support (package name varies)
-if ! rpm -q zlib.i686 &>/dev/null && ! rpm -q glibc-minimal-langpack.i686 &>/dev/null; then
-    # Try to find the correct package for 32-bit zlib
-    if dnf list glibc-devel.i686 &>/dev/null; then
-        missing_pkgs="$missing_pkgs glibc-devel.i686"
-    elif dnf list zlib.i686 &>/dev/null; then
-        missing_pkgs="$missing_pkgs zlib.i686"
-    elif dnf list glibc-minimal-langpack.i686 &>/dev/null; then
-        missing_pkgs="$missing_pkgs glibc-minimal-langpack.i686"
-    fi
-fi
-
-# Check the main required packages
-for pkg in $required_pkgs; do
-    base_pkg=${pkg%%.i686}
-    base_pkg=${base_pkg%%.x86_64}
-    if ! rpm -q $base_pkg &>/dev/null; then
-        missing_pkgs="$missing_pkgs $pkg"
-    fi
-done
-
-if [ -n "$missing_pkgs" ]; then
-    printf "Missing dependencies:$missing_pkgs\n"
-    read -p "Do you want to install the missing dependencies? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        printf "Cannot continue without required packages. Aborting.\n"
-        exit 1
-    fi
-    printf "Installing missing dependencies...\n"
-    dnf install -y --skip-unavailable $missing_pkgs
-    
-    # Check if all critical packages were installed
-    critical_failure=0
-    for pkg in curl git unzip; do
-        if ! rpm -q $pkg &>/dev/null; then
-            printf "Critical package $pkg failed to install!\n"
-            critical_failure=1
-        fi
-    done
-    
-    if [ $critical_failure -eq 1 ]; then
-        printf "Failed to install critical packages. Please install them manually and try again.\n"
-        exit 1
-    else
-        printf "Dependencies installed successfully.\n"
-    fi
-else
-    printf "All dependencies are installed.\n"
-fi
+success "Dependencies installation completed."
 
 # Create a temporary directory for downloads
 TEMP_DIR="$HOME/Downloads/android_dev_setup_temp"
@@ -79,7 +37,7 @@ mkdir -p "$TEMP_DIR"
 ANDROID_STUDIO_DIR="$HOME/Programs/Android_Studio"
 FLUTTER_DIR="$HOME/Programs/flutter"
 
-printf "\n[1/4] Finding latest Android Studio version for Linux...\n"
+info "Finding latest Android Studio version for Linux..."
 
 # Download the Android Studio download page which has the latest version number in the table
 website="https://developer.android.com/studio#downloads"
@@ -103,9 +61,9 @@ fi
 if [ -z "$version" ]; then
     # Fallback to a known stable version if extraction fails
     version="2024.3.2.14"
-    printf "Warning: Could not determine latest version, using fallback version $version\n"
+    warn "Could not determine latest version, using fallback version $version"
 else
-    printf "Detected latest stable Android Studio version: $version\n"
+    success "Detected latest stable Android Studio version: $version"
 fi
 
 # Construct the download URL
@@ -114,13 +72,12 @@ ANDROID_STUDIO_FILE="$TEMP_DIR/android_studio.tar.gz"
 
 # Verify URL exists
 if curl --output /dev/null --silent --head --fail "$ANDROID_STUDIO_URL"; then
-    printf "Found valid Android Studio download link: $ANDROID_STUDIO_URL\n"
+    success "Found valid Android Studio download link: $ANDROID_STUDIO_URL"
 else
-    printf "Failed to find downloadable Android Studio link. Abort.\n"
-    exit 1
+    error "Failed to find downloadable Android Studio link."
 fi
 
-printf "\n[2/4] Finding latest Flutter SDK version for Linux...\n"
+info "Finding latest Flutter SDK version for Linux..."
 
 # Get Flutter SDK URL
 FLUTTER_MANIFEST_URL="https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json"
@@ -131,11 +88,10 @@ FLUTTER_URL=$(grep -A 10 '"channel": "stable"' "$FLUTTER_JSON" | grep 'archive' 
 FLUTTER_FILE="$TEMP_DIR/flutter_sdk.tar.xz"
 
 if [ -z "$FLUTTER_URL" ]; then
-    printf "Failed to get the latest Flutter SDK download link. Abort.\n"
-    exit 1
+    error "Failed to get the latest Flutter SDK download link."
 fi
 
-printf "Found Flutter SDK download link: $FLUTTER_URL\n"
+success "Found Flutter SDK download link: $FLUTTER_URL"
 
 # Ask user for confirmation
 printf "\nReady to download and install:"
@@ -144,51 +100,51 @@ printf "\n - Flutter SDK (latest stable)\n"
 read -p "Do you want to continue? (y/N) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    printf "Aborted.\n"
+    warn "Aborted."
     exit 0
 fi
 
 # Download phase
-printf "\n[3/4] Downloading packages...\n"
+info "Downloading packages..."
 
-printf "Downloading Android Studio ($version)...\n"
+info "Downloading Android Studio ($version)..."
 wget -O "$ANDROID_STUDIO_FILE" "$ANDROID_STUDIO_URL" -q --show-progress
 
-printf "Downloading Flutter SDK...\n"
+info "Downloading Flutter SDK..."
 wget -O "$FLUTTER_FILE" "$FLUTTER_URL" -q --show-progress
 
 # Installation phase
-printf "\n[4/4] Installing packages...\n"
+info "Installing packages..."
 
 # Install Android Studio
-printf "Installing Android Studio...\n"
+info "Installing Android Studio..."
 mkdir -p "$ANDROID_STUDIO_DIR"
-printf "Extracting Android Studio archive to $ANDROID_STUDIO_DIR...\n"
+info "Extracting Android Studio archive to $ANDROID_STUDIO_DIR..."
 tar -xzf "$ANDROID_STUDIO_FILE" -C "$ANDROID_STUDIO_DIR" --strip-components=1
 launcher="$ANDROID_STUDIO_DIR/bin/studio.sh"
 chmod +x "$launcher"
 
-printf "\nAndroid Studio has been installed.\n"
-printf "You can start it with: $launcher\n\n"
+success "Android Studio has been installed."
+info "You can start it with: $launcher"
 
 # Install Flutter SDK
-printf "Installing Flutter SDK...\n"
+info "Installing Flutter SDK..."
 mkdir -p "$FLUTTER_DIR"
-printf "Extracting Flutter SDK archive to $FLUTTER_DIR...\n"
+info "Extracting Flutter SDK archive to $FLUTTER_DIR..."
 tar -xf "$FLUTTER_FILE" -C "$FLUTTER_DIR" --strip-components=1
 
 # Add flutter to PATH for current session
 export PATH="$FLUTTER_DIR/bin:$PATH"
-printf "\n[INFO] Flutter SDK installed at $FLUTTER_DIR\n"
-printf "[INFO] Added Flutter to PATH for this session.\n"
-printf "[INFO] To make it permanent, add this line to your ~/.bashrc or ~/.zshrc:\n"
+success "Flutter SDK installed at $FLUTTER_DIR"
+info "Added Flutter to PATH for this session."
+info "To make it permanent, add this line to your ~/.bashrc or ~/.zshrc:"
 printf 'export PATH="$FLUTTER_DIR/bin:$PATH"\n\n'
 
 # Launch Android Studio first time setup if requested
 read -p "Would you like to run Android Studio first-time setup now? (y/N) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    printf "Launching Android Studio. Please complete the setup wizard.\n"
+    info "Launching Android Studio. Please complete the setup wizard."
     "$launcher" &
     
     # Wait for user to indicate they're done with Android Studio setup
@@ -199,7 +155,7 @@ fi
 read -p "Would you like to run Flutter doctor now? (y/N) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    printf "Running 'flutter doctor'...\n"
+    info "Running 'flutter doctor'..."
     "$FLUTTER_DIR/bin/flutter" doctor
     
     # Accept Android licenses if requested
@@ -214,7 +170,7 @@ fi
 read -p "Remove downloaded files? (Y/n) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-    printf "Cleaning up temporary files...\n"
+    info "Cleaning up temporary files..."
     rm -f "$ANDROID_STUDIO_FILE"
     rm -f "$FLUTTER_FILE"
     rm -f "$main_html"

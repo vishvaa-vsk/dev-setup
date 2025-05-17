@@ -21,47 +21,15 @@ printf "\n========================================================"
 printf "\n=== Node.js Development Environment Setup Script ======="
 printf "\n========================================================\n"
 
-# Check for required dependencies
-required_pkgs="curl git"
-
-printf "\nChecking dependencies...\n"
-missing_pkgs=""
-
-# Check the main required packages
-for pkg in $required_pkgs; do
-    if ! rpm -q $pkg &>/dev/null; then
-        missing_pkgs="$missing_pkgs $pkg"
-    fi
-done
-
-if [ -n "$missing_pkgs" ]; then
-    printf "Missing dependencies:$missing_pkgs\n"
-    
-    if [ "$(id -u)" -ne 0 ]; then
-        error "Please run this script as root or with sudo to install dependencies."
-    fi
-    
-    printf "Installing missing dependencies...\n"
-    dnf install -y $missing_pkgs
-    
-    # Check if critical packages were installed
-    critical_failure=0
-    for pkg in curl git; do
-        if ! rpm -q $pkg &>/dev/null; then
-            printf "Critical package $pkg failed to install!\n"
-            critical_failure=1
-        fi
-    done
-    
-    if [ $critical_failure -eq 1 ]; then
-        printf "Failed to install critical packages. Please install them manually and try again.\n"
-        exit 1
-    else
-        printf "Dependencies installed successfully.\n"
-    fi
-else
-    printf "All dependencies are installed.\n"
+# Ensure required dependencies are installed
+# (Most basic dependencies should be handled by the main setup script)
+if [ "$(id -u)" -ne 0 ]; then
+    error "Please run this script as root or with sudo to install dependencies."
 fi
+
+# Install dependencies if needed - DNF will skip already installed packages
+info "Ensuring dependencies are installed..."
+dnf install -y --skip-unavailable curl git
 
 # Install NVM
 info "Installing Node Version Manager (NVM)..."
