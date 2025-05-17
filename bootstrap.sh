@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eo pipefail
 
 # Define colors
 GREEN="\033[1;32m"
@@ -23,13 +23,13 @@ This script downloads and runs all the necessary setup scripts to configure
 a complete development environment on Fedora Linux.
 
 Usage:
-    sudo bash bootstrap.sh [OPTIONS]
+    bash bootstrap.sh [OPTIONS]
 
 Options:
     -h, --help     Show this help message and exit
     --no-cleanup   Keep downloaded scripts after installation
 
-Note: This script must be run as root or with sudo privileges.
+Note: The script will automatically use sudo when needed.
 
 EOF
     exit 0
@@ -52,10 +52,14 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Check if running as root
+# Check if we're root and re-execute with sudo if needed
 if [[ $EUID -ne 0 ]]; then
-    error "This script must be run as root or with sudo."
+    info "This script requires root privileges. Requesting sudo access..."
+    exec sudo bash "$0" "$@"
 fi
+
+# Store the actual user (even when sudo is used)
+ACTUAL_USER=${SUDO_USER:-$USER}
 
 # Create temp directory
 TEMP_DIR=$(mktemp -d)
@@ -84,9 +88,11 @@ bash setup.sh
 
 # Keep the scripts if requested
 if [[ $NO_CLEANUP -eq 1 ]]; then
-    mkdir -p "/home/$SUDO_USER/dev-setup-scripts" 2>/dev/null || true
-    cp -f ./* "/home/$SUDO_USER/dev-setup-scripts/"
-    success "Scripts saved to /home/$SUDO_USER/dev-setup-scripts/"
+    USER_HOME=$(eval echo ~${ACTUAL_USER})
+    mkdir -p "$USER_HOME/dev-setup-scripts" 2>/dev/null || true
+    cp -f ./* "$USER_HOME/dev-setup-scripts/"
+    chown -R "$ACTUAL_USER:$(id -gn "$ACTUAL_USER")" "$USER_HOME/dev-setup-scripts/"
+    success "Scripts saved to $USER_HOME/dev-setup-scripts/"
 fi
 
 success "Setup complete!"
