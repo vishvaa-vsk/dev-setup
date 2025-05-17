@@ -23,13 +23,13 @@ This script downloads and runs all the necessary setup scripts to configure
 a complete development environment on Fedora Linux.
 
 Usage:
-    bash bootstrap.sh [OPTIONS]
+    sudo bash bootstrap.sh [OPTIONS]
 
 Options:
     -h, --help     Show this help message and exit
     --no-cleanup   Keep downloaded scripts after installation
 
-Note: The script will automatically use sudo when needed.
+Note: This script must be run as root or with sudo.
 
 EOF
     exit 0
@@ -52,24 +52,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Check if we're root and re-execute with sudo if needed
+# Check if running as root
 if [[ $EUID -ne 0 ]]; then
-    info "This script requires root privileges. Requesting sudo access..."
-    
-    # Find bash in common locations
-    BASH_PATH=""
-    for potential_path in "/bin/bash" "/usr/bin/bash" "$(which bash 2>/dev/null)"; do
-        if [[ -x "$potential_path" ]]; then
-            BASH_PATH="$potential_path"
-            break
-        fi
-    done
-    
-    if [[ -z "$BASH_PATH" ]]; then
-        error "Could not find bash executable. Please run this script with sudo manually."
-    fi
-    
-    exec sudo "$BASH_PATH" "$0" "$@"
+    error "This script must be run as root. Please use: sudo bash bootstrap.sh"
 fi
 
 # Store the actual user (even when sudo is used)

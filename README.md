@@ -13,15 +13,15 @@ This repository provides an automated script to set up a development environment
 
 ## Usage
 
-**⚠️ The script will request sudo privileges when needed and prompt for confirmation before making changes.**
+**⚠️ This script must be run with sudo privileges.**
 
 ### One-liner install (complete setup)
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/vishvaa-vsk/dev-setup/main/bootstrap.sh)"
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/vishvaa-vsk/dev-setup/main/bootstrap.sh)"
 ```
 
-This one-liner downloads all necessary scripts (main script + modules) and runs the complete setup with automatic sudo elevation.
+This one-liner downloads all necessary scripts (main script + modules) and runs the complete setup.
 
 ### Manual install
 
