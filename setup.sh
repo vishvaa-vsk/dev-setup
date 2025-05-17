@@ -50,7 +50,7 @@ dnf remove gnome-tour gnome-maps gnome-weather gnome-contacts gnome-clocks yelp 
 
 # Core tools
 info "Installing base tools..."
-dnf install -y git curl wget gnupg2 unzip tar ssh || error "Core tools install failed."
+dnf install -y --skip-unavailable git curl wget gnupg2 unzip tar ssh clang cmake ninja-build libgtk-3-dev || error "Core tools install failed."
 
 # VSCode
 info "Setting up VS Code..."
@@ -117,7 +117,6 @@ dnf install -y gcc gcc-c++ || error "GCC install failed."
 
 # Docker
 info "Installing Docker..."
-dnf install -y dnf-plugins-core
 dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo --overwrite
 dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || error "Docker install failed."
 systemctl enable --now docker
