@@ -39,8 +39,6 @@ read -p "This script will set up a dev environment + Hyprland on Fedora Workstat
 
 info "Updating system..."
 dnf -y update
-fwupdmgr refresh --force
-fwupdmgr update
 
 info "Enableing RPM Fusion repositories..."
 dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm -y
