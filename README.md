@@ -1,6 +1,6 @@
 # Fedora Dev + Hyprland Setup
 
-This repository provides an automated script to set up a development environment and Hyprland desktop on Fedora everything (tested on Fedora 42+).
+This repository provides an automated script to set up a development environment and Hyprland desktop on Fedora Workstation (tested on Fedora 42+). Works well on a minimal install too (Fedora everything).
 
 ## Features
 
@@ -8,23 +8,34 @@ This repository provides an automated script to set up a development environment
 - Sets up VS Code and Brave browser
 - Installs Docker (with Fedora 42/dnf5 compatibility)
 - Enables system optimizations (preload, fstrim, ZRAM)
-- Optionally installs Hyprland with JaKooLit dotfiles
+- Optionally installs Hyprland with custom dotfiles
+- Modular setup for Android, Node.js, and Python development environments
 
 ## Usage
 
 **⚠️ Run as root or with sudo. The script will prompt for confirmation before making changes.**
 
-### One-liner install
+### One-liner install (complete setup)
 
 ```bash
-sh <(curl -L https://raw.githubusercontent.com/vishvaa-vsk/dev-setup/main/setup.sh)
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/vishvaa-vsk/dev-setup/main/bootstrap.sh)"
 ```
 
-Or, if you want to review the script first:
+This one-liner downloads all necessary scripts (main script + modules) and runs the complete setup.
+
+### Manual install
+
+If you want to review the scripts first:
 
 ```bash
-curl -O https://raw.githubusercontent.com/vishvaa-vsk/dev-setup/main/setup.sh
-chmod +x setup.sh
+# Clone the repository
+git clone https://github.com/vishvaa-vsk/dev-setup.git
+cd dev-setup
+
+# Make scripts executable
+chmod +x setup.sh setup_android_dev.sh setup_node_dev.sh setup_python_dev.sh
+
+# Run the setup
 sudo bash setup.sh
 ```
 
@@ -33,12 +44,15 @@ sudo bash setup.sh
 - Updates your system
 - Installs essential developer tools
 - Sets up VS Code and Brave browser repositories
-- Installs Node.js LTS via NVM
-- Installs Python 3 and OpenJDK 21 (optional)
-- Installs Docker and adds your user to the docker group (optional)
+- Modular development environment setup:
+  - Node.js: Installs NVM with npm and yarn (via `setup_node_dev.sh`)
+  - Python: Sets up system Python with pyenv for version management (via `setup_python_dev.sh`)
+  - Android: Downloads and installs Android Studio & Flutter SDK (via `setup_android_dev.sh`, optional)
+- Installs OpenJDK 21 (optional)
+- Sets up Docker with legacy `docker-compose` command support
 - Enables system performance tweaks
 - Sets up ZRAM swap
-- Optionally installs Hyprland with JaKooLit dotfiles
+- Optionally installs Hyprland with custom dotfiles
 
 ## Notes
 
