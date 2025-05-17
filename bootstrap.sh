@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -e
 
 # Define colors
 GREEN="\033[1;32m"
@@ -13,94 +13,41 @@ function success() { echo -e "${GREEN}[✔]${NC} $1"; }
 function warn() { echo -e "${YELLOW}[!]${NC} $1"; }
 function error() { echo -e "${RED}[✘]${NC} $1"; exit 1; }
 
-function show_help() {
-    cat << EOF
-    
-Fedora Dev + Hyprland Setup Bootstrap Script
-============================================
-
-This script downloads and runs all the necessary setup scripts to configure 
-a complete development environment on Fedora Linux.
-
-Usage:
-    sudo bash bootstrap.sh [OPTIONS]
-
-Options:
-    -h, --help     Show this help message and exit
-    --no-cleanup   Keep downloaded scripts after installation
-
-Note: This script must be run as root or with sudo.
-
-EOF
-    exit 0
-}
-
-# Parse command line arguments
-NO_CLEANUP=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -h|--help)
-            show_help
-            ;;
-        --no-cleanup)
-            NO_CLEANUP=1
-            shift
-            ;;
-        *)
-            error "Unknown option: $1"
-            ;;
-    esac
-done
-
 # Check if running as root
 if [[ $EUID -ne 0 ]]; then
-    error "This script must be run as root. Please use: sudo bash bootstrap.sh"
+    error "This script must be run as root. Please use: sudo bash bootstrap-simple.sh"
 fi
 
 # Store the actual user (even when sudo is used)
 ACTUAL_USER=${SUDO_USER:-$USER}
+USER_HOME=$(eval echo ~${ACTUAL_USER})
 
-# Create temp directory
-TEMP_DIR=$(mktemp -d)
-trap 'echo "Cleaning up..."; [[ $NO_CLEANUP -eq 0 ]] && rm -rf "$TEMP_DIR"' EXIT INT TERM
+# Create a directory in the user's home to store the scripts
+SCRIPTS_DIR="$USER_HOME/dev-setup-scripts"
+mkdir -p "$SCRIPTS_DIR"
+chown "$ACTUAL_USER:$(id -gn "$ACTUAL_USER")" "$SCRIPTS_DIR"
 
-info "Downloading setup scripts from repository..."
-
-# First change to the temp directory
-cd "$TEMP_DIR" || exit 1
-
-# Download all required scripts
+# Download all required scripts directly to the scripts directory
+info "Downloading setup scripts..."
 BASE_URL="https://raw.githubusercontent.com/vishvaa-vsk/dev-setup/main"
 SCRIPTS=("setup.sh" "setup_android_dev.sh" "setup_node_dev.sh" "setup_python_dev.sh")
 
+cd "$SCRIPTS_DIR"
+
 for script in "${SCRIPTS[@]}"; do
     info "Downloading $script..."
-    if ! curl -fsSL "$BASE_URL/$script" -o "$script"; then
-        error "Failed to download $script. Please check your internet connection and try again."
-    fi
+    curl -fsSL "$BASE_URL/$script" -o "$script" || error "Failed to download $script"
     chmod +x "$script"
 done
 
-# Verify that setup.sh exists
-if [[ ! -f "setup.sh" ]]; then
-    error "Critical error: setup.sh was not downloaded correctly. Please check your internet connection and try again."
-fi
-
 # List files for debugging
+info "Downloaded files:"
 ls -la
 
 success "All scripts downloaded successfully."
-info "Running main setup script..."
 
-# Keep the scripts if requested
-if [[ $NO_CLEANUP -eq 1 ]]; then
-    USER_HOME=$(eval echo ~${ACTUAL_USER})
-    mkdir -p "$USER_HOME/dev-setup-scripts" 2>/dev/null || true
-    cp -f ./* "$USER_HOME/dev-setup-scripts/"
-    chown -R "$ACTUAL_USER:$(id -gn "$ACTUAL_USER")" "$USER_HOME/dev-setup-scripts/"
-    success "Scripts saved to $USER_HOME/dev-setup-scripts/"
-fi
+# Run the main setup script
+info "Executing setup script..."
+bash "$SCRIPTS_DIR/setup.sh"
 
-# Execute the main setup script
-info "Executing setup.sh"
-bash ./setup.sh
+success "Setup complete!"

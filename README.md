@@ -18,7 +18,7 @@ This repository provides an automated script to set up a development environment
 ### One-liner install (complete setup)
 
 ```bash
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/vishvaa-vsk/dev-setup/main/bootstrap-simple.sh)"
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/vishvaa-vsk/dev-setup/main/bootstrap.sh)"
 ```
 
 This one-liner downloads all necessary scripts (main script + modules) and runs the complete setup.
@@ -26,7 +26,7 @@ This one-liner downloads all necessary scripts (main script + modules) and runs 
 Alternatively, if you encounter any issues with the above command, you can try:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/vishvaa-vsk/dev-setup/main/bootstrap-simple.sh -o ~/bootstrap-simple.sh && chmod +x ~/bootstrap-simple.sh && sudo ~/bootstrap-simple.sh
+curl -fsSL https://raw.githubusercontent.com/vishvaa-vsk/dev-setup/main/bootstrap.sh -o ~/bootstrap.sh && chmod +x ~/bootstrap.sh && sudo ~/bootstrap.sh
 ```
 
 ### Manual install
