@@ -19,6 +19,19 @@ if [[ $EUID -ne 0 ]]; then
     error "Please run this script as root or with sudo."
 fi
 
+# Configure DNF for faster downloads
+info "Configuring DNF for faster downloads..."
+if ! grep -q "max_parallel_downloads" /etc/dnf/dnf.conf; then
+    echo "Adding max_parallel_downloads=10 to dnf.conf"
+    echo "max_parallel_downloads=10" >> /etc/dnf/dnf.conf
+fi
+
+if ! grep -q "fastestmirror" /etc/dnf/dnf.conf; then
+    echo "Adding fastestmirror=true to dnf.conf"
+    echo "fastestmirror=true" >> /etc/dnf/dnf.conf
+fi
+success "DNF configured for faster downloads"
+
 TARGET_USER="${SUDO_USER:-$(whoami)}"
 
 read -p "This script will set up a dev environment + Hyprland on Fedora Workstation. Continue? (y/N): " proceed
@@ -26,6 +39,13 @@ read -p "This script will set up a dev environment + Hyprland on Fedora Workstat
 
 info "Updating system..."
 dnf -y update
+fwupdmgr refresh --force
+fwupdmgr update
+
+info "Enableing RPM Fusion repositories..."
+dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm -y
+dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm -y
+dnf upgrade --refresh
 
 info "De-bloating the GNOME desktop..."
 dnf remove gnome-tour gnome-maps gnome-weather gnome-contacts gnome-clocks yelp gnome-web evince rhythmbox totem
