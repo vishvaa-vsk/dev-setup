@@ -24,7 +24,7 @@ printf "\n========================================================\n"
 info "Installing required dependencies for Android development..."
 
 # Try to install all potentially needed packages
-dnf install -y --skip-unavailable curl git wget unzip xz zip mesa-libGLU glibc glibc.i686 \
+dnf install -y --skip-unavailable clang cmake ninja-build libgtk-3-dev curl git wget unzip xz zip mesa-libGLU glibc glibc.i686 \
     libstdc++ libstdc++.i686 bzip2-libs zlib.i686 glibc-devel.i686 glibc-minimal-langpack.i686 2>/dev/null || true
 
 success "Dependencies installation completed."
@@ -121,7 +121,7 @@ info "Installing Android Studio..."
 mkdir -p "$ANDROID_STUDIO_DIR"
 info "Extracting Android Studio archive to $ANDROID_STUDIO_DIR..."
 tar -xzf "$ANDROID_STUDIO_FILE" -C "$ANDROID_STUDIO_DIR" --strip-components=1
-launcher="$ANDROID_STUDIO_DIR/bin/studio.sh"
+launcher="$ANDROID_STUDIO_DIR/bin/studio"
 chmod +x "$launcher"
 
 success "Android Studio has been installed."

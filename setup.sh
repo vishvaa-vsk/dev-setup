@@ -164,6 +164,35 @@ systemctl daemon-reexec
 systemctl enable --now systemd-zram-setup@zram0.service
 systemctl restart systemd-zram-setup@zram0.service
 
+# Download Nerd Fonts
+read -p "Install FiraCode Nerd Font? (y/N): " install_nerd_fonts
+if [[ "$install_nerd_fonts" =~ ^[Yy]$ ]]; then
+    info "Downloading and installing FiraCode Nerd Font..."
+    
+    # Install dependencies
+    dnf install -y wget unzip || error "Failed to install dependencies"
+    
+    # Create fonts directory for user
+    USER_FONTS_DIR="/home/$TARGET_USER/.fonts"
+    su - "$TARGET_USER" -c "mkdir -p $USER_FONTS_DIR" || error "Failed to create fonts directory"
+    
+    # Download FiraCode Nerd Font
+    FONT_ZIP="/tmp/FiraCode.zip"
+    wget -q "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/FiraCode.zip" -O "$FONT_ZIP" || error "Failed to download FiraCode font"
+    
+    # Extract to user's fonts directory
+    su - "$TARGET_USER" -c "unzip -o $FONT_ZIP -d $USER_FONTS_DIR" || warn "Failed to extract fonts"
+    
+    # Clean up
+    rm -f "$FONT_ZIP"
+    
+    # Rebuild font cache
+    info "Rebuilding font cache..."
+    su - "$TARGET_USER" -c "fc-cache -f -v" || warn "Failed to rebuild font cache"
+    
+    success "FiraCode Nerd Font has been installed successfully!"
+fi
+
 # Zsh with Oh My Zsh setup
 read -p "Install Zsh with Oh My Zsh? (y/N): " install_zsh
 if [[ "$install_zsh" =~ ^[Yy]$ ]]; then
