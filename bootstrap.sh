@@ -55,7 +55,21 @@ done
 # Check if we're root and re-execute with sudo if needed
 if [[ $EUID -ne 0 ]]; then
     info "This script requires root privileges. Requesting sudo access..."
-    exec sudo bash "$0" "$@"
+    
+    # Find bash in common locations
+    BASH_PATH=""
+    for potential_path in "/bin/bash" "/usr/bin/bash" "$(which bash 2>/dev/null)"; do
+        if [[ -x "$potential_path" ]]; then
+            BASH_PATH="$potential_path"
+            break
+        fi
+    done
+    
+    if [[ -z "$BASH_PATH" ]]; then
+        error "Could not find bash executable. Please run this script with sudo manually."
+    fi
+    
+    exec sudo "$BASH_PATH" "$0" "$@"
 fi
 
 # Store the actual user (even when sudo is used)
