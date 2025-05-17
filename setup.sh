@@ -21,11 +21,14 @@ fi
 
 TARGET_USER="${SUDO_USER:-$(whoami)}"
 
-read -p "This script will set up a dev environment + Hyprland on Fedora. Continue? (y/N): " proceed
+read -p "This script will set up a dev environment + Hyprland on Fedora Workstation. Continue? (y/N): " proceed
 [[ "$proceed" =~ ^[Yy]$ ]] || { warn "Aborted."; exit 1; }
 
 info "Updating system..."
 dnf -y update
+
+info "De-bloating the GNOME desktop..."
+dnf remove gnome-tour gnome-maps gnome-weather gnome-contacts gnome-clocks yelp gnome-web evince rhythmbox totem
 
 # Core tools
 info "Installing base tools..."
@@ -44,26 +47,41 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 EOF
 dnf install -y code || error "VS Code install failed."
 
+read -p "Remove Firefox? (y/N): " remove_firefox
+if [[ "$remove_firefox" =~ ^[Yy]$ ]]; then
+    info "Removing Firefox..."
+    dnf remove -y firefox || error "Firefox removal failed."
+else
+    info "Keeping Firefox installed."
+fi
+
 # Brave Browser
 info "Installing Brave browser..."
 curl -fsS https://dl.brave.com/install.sh | bash || error "Brave install failed."
 
-# NVM & Node.js LTS
-info "Installing Node.js LTS via NVM..."
-if [[ ! -d "$HOME/.nvm" ]]; then
-    su - "$TARGET_USER" -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash"
+# Node.js & Python development setup
+read -p "Install Node.js development environment (NVM with npm and yarn)? (Y/n): " node_dev
+if [[ ! $node_dev =~ ^[Nn]$ ]]; then
+    info "Setting up Node.js development environment with nvm and yarn..."
+    bash "$(dirname "$0")/setup_node_dev.sh" || warn "Node.js setup failed!"
 fi
-export NVM_DIR="/home/$TARGET_USER/.nvm"
-source "$NVM_DIR/nvm.sh"
-su - "$TARGET_USER" -c "source $NVM_DIR/nvm.sh && nvm install --lts && npm install -g yarn"
 
-# Python 3
-info "Installing Python 3..."
-dnf install -y python3 python3-pip || error "Python install failed."
+read -p "Install Python with pyenv? (Y/n): " python_dev
+if [[ ! $python_dev =~ ^[Nn]$ ]]; then
+    info "Setting up Python environment (system Python with pyenv)..."
+    bash "$(dirname "$0")/setup_python_dev.sh" || warn "Python setup failed!"
+fi
 
 # JDK 21
 read -p "Install OpenJDK 21? (y/N): " jdk
 [[ "$jdk" =~ ^[Yy]$ ]] && dnf install -y java-21-openjdk java-21-openjdk-devel || true
+
+# Android development setup
+read -p "Install Android development environment? (y/N): " android_dev
+if [[ "$android_dev" =~ ^[Yy]$ ]]; then
+    info "Setting up Android development environment..."
+    su - "$TARGET_USER" -c "bash \"$(dirname "$0")/setup_android_dev.sh\"" || warn "Android setup failed!"
+fi
 
 # GCC & G++
 info "Installing GCC..."
@@ -78,6 +96,26 @@ systemctl enable --now docker
 
 read -p "Add '$TARGET_USER' to docker group? (y/N): " dockergroup
 [[ "$dockergroup" =~ ^[Yy]$ ]] && usermod -aG docker "$TARGET_USER"
+
+# Add legacy docker-compose command
+info "Setting up legacy docker-compose command..."
+DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | sed -e 's/.*"tag_name": "v\(.*\)".*/\1/')
+if [[ -n "$DOCKER_COMPOSE_VERSION" ]]; then
+  success "Found Docker Compose version: $DOCKER_COMPOSE_VERSION"
+  curl -L "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  chmod +x /usr/local/bin/docker-compose
+  ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+  success "Legacy docker-compose command installed successfully. You can now use both 'docker compose' and 'docker-compose'."
+else
+  warn "Could not determine latest Docker Compose version. Setting up wrapper script instead."
+  cat > /usr/local/bin/docker-compose << 'EOF'
+#!/bin/bash
+docker compose "$@"
+EOF
+  chmod +x /usr/local/bin/docker-compose
+  ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+  success "Legacy docker-compose wrapper script installed. You can now use both 'docker compose' and 'docker-compose'."
+fi
 
 # Performance tweaks
 info "Enabling system optimizations..."
@@ -98,8 +136,5 @@ systemctl daemon-reexec
 systemctl enable --now systemd-zram-setup@zram0.service
 systemctl restart systemd-zram-setup@zram0.service
 
-# Hyprland Dotfiles (JaKooLit)
-read -p "Install Hyprland (JaKooLit) setup? (y/N): " hypr
-[[ "$hypr" =~ ^[Yy]$ ]] && su - "$TARGET_USER" -c 'sh <(curl -L https://raw.githubusercontent.com/JaKooLit/Fedora-Hyprland/main/auto-install.sh)' || true
 
 success "All setup complete! Please reboot your system to apply all changes."
