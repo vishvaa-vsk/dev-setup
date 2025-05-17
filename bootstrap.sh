@@ -75,16 +75,19 @@ SCRIPTS=("setup.sh" "setup_android_dev.sh" "setup_node_dev.sh" "setup_python_dev
 
 for script in "${SCRIPTS[@]}"; do
     info "Downloading $script..."
-    if ! curl -fsSL "$BASE_URL/$script" -o "$TEMP_DIR/$script"; then
+    if ! curl -fsSL "$BASE_URL/$script" -o "$script"; then
         error "Failed to download $script. Please check your internet connection and try again."
     fi
-    chmod +x "$TEMP_DIR/$script"
+    chmod +x "$script"
 done
 
 # Verify that setup.sh exists
-if [[ ! -f "$TEMP_DIR/setup.sh" ]]; then
+if [[ ! -f "setup.sh" ]]; then
     error "Critical error: setup.sh was not downloaded correctly. Please check your internet connection and try again."
 fi
+
+# List files for debugging
+ls -la
 
 success "All scripts downloaded successfully."
 info "Running main setup script..."
@@ -93,11 +96,11 @@ info "Running main setup script..."
 if [[ $NO_CLEANUP -eq 1 ]]; then
     USER_HOME=$(eval echo ~${ACTUAL_USER})
     mkdir -p "$USER_HOME/dev-setup-scripts" 2>/dev/null || true
-    cp -f "$TEMP_DIR"/* "$USER_HOME/dev-setup-scripts/"
+    cp -f ./* "$USER_HOME/dev-setup-scripts/"
     chown -R "$ACTUAL_USER:$(id -gn "$ACTUAL_USER")" "$USER_HOME/dev-setup-scripts/"
     success "Scripts saved to $USER_HOME/dev-setup-scripts/"
 fi
 
-# Execute the main setup script with the full path to ensure it's found
-info "Executing: bash $TEMP_DIR/setup.sh"
-exec bash "$TEMP_DIR/setup.sh"
+# Execute the main setup script
+info "Executing setup.sh"
+bash ./setup.sh
