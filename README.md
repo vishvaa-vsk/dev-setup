@@ -9,6 +9,7 @@ This repository provides an automated script to set up a development environment
 - Installs Docker (with Fedora 42/dnf5 compatibility)
 - Enables system optimizations (preload, fstrim, ZRAM)
 - Optionally installs Hyprland with custom dotfiles
+- Optionally installs Spotify with Spicetify customization framework
 - Modular setup for Android, Node.js, and Python development environments
 - Configures Flutter web to use Brave Browser
 - Optimizes DNF package manager with parallel downloads and fastest mirror
@@ -41,7 +42,7 @@ git clone https://github.com/vishvaa-vsk/dev-setup.git
 cd dev-setup
 
 # Make scripts executable
-chmod +x setup.sh setup_android_dev.sh setup_node_dev.sh setup_python_dev.sh
+chmod +x setup.sh setup_android_dev.sh setup_node_dev.sh setup_python_dev.sh setup_spicetify.sh
 
 # Run the setup
 sudo bash setup.sh
@@ -62,6 +63,10 @@ sudo bash setup.sh
 - Sets up Docker with legacy `docker-compose` command support
 - Enables system performance tweaks
 - Sets up ZRAM swap
+- Optionally installs Spotify with Spicetify (via `setup_spicetify.sh`)
+  - Installs Spotify via Flatpak
+  - Sets up Spicetify CLI with Marketplace extension
+  - Configures proper paths for Flatpak installation
 - Optionally installs Hyprland with custom dotfiles
 
 ## Notes
