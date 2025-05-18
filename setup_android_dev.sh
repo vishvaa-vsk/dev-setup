@@ -137,6 +137,25 @@ tar -xf "$FLUTTER_FILE" -C "$FLUTTER_DIR" --strip-components=1
 export PATH="$FLUTTER_DIR/bin:$PATH"
 success "Flutter SDK installed at $FLUTTER_DIR"
 info "Added Flutter to PATH for this session."
+
+# Add Flutter to PATH in shell config files
+info "Adding Flutter to PATH permanently..."
+if [ -f "$HOME/.bashrc" ]; then
+    if ! grep -q "FLUTTER_DIR" "$HOME/.bashrc"; then
+        echo -e "\n# Flutter SDK" >> "$HOME/.bashrc"
+        echo "export PATH=\"$FLUTTER_DIR/bin:\$PATH\"" >> "$HOME/.bashrc"
+        info "Added Flutter to PATH in .bashrc"
+    fi
+fi
+
+if [ -f "$HOME/.zshrc" ]; then
+    if ! grep -q "FLUTTER_DIR" "$HOME/.zshrc"; then
+        echo -e "\n# Flutter SDK" >> "$HOME/.zshrc"
+        echo "export PATH=\"$FLUTTER_DIR/bin:\$PATH\"" >> "$HOME/.zshrc"
+        info "Added Flutter to PATH in .zshrc"
+    fi
+fi
+
 info "To make it permanent, add this line to your ~/.bashrc or ~/.zshrc:"
 printf 'export PATH="$FLUTTER_DIR/bin:$PATH"\n\n'
 

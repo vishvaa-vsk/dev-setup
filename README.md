@@ -10,6 +10,8 @@ This repository provides an automated script to set up a development environment
 - Enables system optimizations (preload, fstrim, ZRAM)
 - Optionally installs Hyprland with custom dotfiles
 - Modular setup for Android, Node.js, and Python development environments
+- Configures Flutter web to use Brave Browser
+- Optimizes DNF package manager with parallel downloads and fastest mirror
 
 ## Usage
 
@@ -49,11 +51,13 @@ sudo bash setup.sh
 
 - Updates your system
 - Installs essential developer tools
-- Sets up VS Code and Brave browser repositories
+- Sets up VS Code and Brave browser
+- Optionally installs FiraCode Nerd Font
 - Modular development environment setup:
   - Node.js: Installs NVM with npm and yarn (via `setup_node_dev.sh`)
   - Python: Sets up system Python with pyenv for version management (via `setup_python_dev.sh`)
   - Android: Downloads and installs Android Studio & Flutter SDK (via `setup_android_dev.sh`, optional)
+    - Configures Flutter to use Brave Browser for web development
 - Installs OpenJDK 21 (optional)
 - Sets up Docker with legacy `docker-compose` command support
 - Enables system performance tweaks

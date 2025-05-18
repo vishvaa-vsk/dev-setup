@@ -52,6 +52,41 @@ dnf remove gnome-tour gnome-maps gnome-weather gnome-contacts gnome-clocks yelp 
 info "Installing base tools..."
 dnf install -y --skip-unavailable git curl wget gnupg2 unzip tar ssh clang cmake ninja-build libgtk-3-dev || error "Core tools install failed."
 
+# Zsh with Oh My Zsh setup (moved to the beginning)
+read -p "Install Zsh with Oh My Zsh? (Y/n): " install_zsh
+if [[ ! $install_zsh =~ ^[Nn]$ ]]; then
+    info "Installing Zsh..."
+    dnf install -y zsh || error "Zsh installation failed."
+    
+    # Install Oh My Zsh for the target user
+    info "Installing Oh My Zsh for $TARGET_USER..."
+    su - "$TARGET_USER" -c 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended' || warn "Oh My Zsh installation failed!"
+    
+    # Install popular plugins
+    info "Installing useful Zsh plugins..."
+    
+    # zsh-syntax-highlighting
+    su - "$TARGET_USER" -c 'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting' || warn "zsh-syntax-highlighting installation failed!"
+    
+    # powerlevel10k theme (popular theme with nice features)
+    su - "$TARGET_USER" -c 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k' || warn "powerlevel10k theme installation failed!"
+    
+    # Update .zshrc to use the plugins and theme
+    su - "$TARGET_USER" -c 'sed -i "s/ZSH_THEME=.*/ZSH_THEME=\"powerlevel10k\/powerlevel10k\"/" ~/.zshrc'
+    su - "$TARGET_USER" -c 'sed -i "s/plugins=(git)/plugins=(git zsh-syntax-highlighting)/" ~/.zshrc'
+
+    # Set Zsh as default shell for the user
+    read -p "Set Zsh as the default shell for $TARGET_USER? (Y/n): " set_zsh_default
+    if [[ ! $set_zsh_default =~ ^[Nn]$ ]]; then
+        info "Setting Zsh as default shell for $TARGET_USER..."
+        chsh -s /bin/zsh "$TARGET_USER" || warn "Failed to change default shell to Zsh!"
+        success "Zsh is now the default shell for $TARGET_USER!"
+        info "Shell change will take effect after logging out and back in."
+    fi
+    
+    success "Zsh with Oh My Zsh has been installed successfully!"
+fi
+
 # VSCode
 info "Setting up VS Code..."
 rpm --import https://packages.microsoft.com/keys/microsoft.asc
@@ -192,40 +227,35 @@ if [[ "$install_nerd_fonts" =~ ^[Yy]$ ]]; then
     success "FiraCode Nerd Font has been installed successfully!"
 fi
 
-# Zsh with Oh My Zsh setup
-read -p "Install Zsh with Oh My Zsh? (y/N): " install_zsh
-if [[ "$install_zsh" =~ ^[Yy]$ ]]; then
-    info "Installing Zsh..."
-    dnf install -y zsh || error "Zsh installation failed."
+# Transfer PATH variables from .bashrc to .zshrc if Zsh is installed
+if [[ -f "/home/$TARGET_USER/.zshrc" ]]; then
+    info "Transferring PATH variables from .bashrc to .zshrc..."
     
-    # Install Oh My Zsh for the target user
-    info "Installing Oh My Zsh for $TARGET_USER..."
-    su - "$TARGET_USER" -c 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended' || warn "Oh My Zsh installation failed!"
+    # Extract PATH-related lines from .bashrc
+    PATH_LINES=$(su - "$TARGET_USER" -c "grep -E 'export PATH=|PATH=|\\\$PATH' ~/.bashrc" || true)
     
-    # Install popular plugins
-    info "Installing useful Zsh plugins..."
-    
-    # zsh-syntax-highlighting
-    su - "$TARGET_USER" -c 'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting' || warn "zsh-syntax-highlighting installation failed!"
-    
-    
-    # powerlevel10k theme (popular theme with nice features)
-    su - "$TARGET_USER" -c 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k' || warn "powerlevel10k theme installation failed!"
-    
-    # Update .zshrc to use the plugins and theme
-    su - "$TARGET_USER" -c 'sed -i "s/ZSH_THEME=.*/ZSH_THEME=\"powerlevel10k\/powerlevel10k\"/" ~/.zshrc'
-    su - "$TARGET_USER" -c 'sed -i "s/plugins=(git)/plugins=(git zsh-syntax-highlighting)/" ~/.zshrc'
-
-    # Set Zsh as default shell for the user
-    read -p "Set Zsh as the default shell for $TARGET_USER? (y/N): " set_zsh_default
-    if [[ "$set_zsh_default" =~ ^[Yy]$ ]]; then
-        info "Setting Zsh as default shell for $TARGET_USER..."
-        chsh -s /bin/zsh "$TARGET_USER" || warn "Failed to change default shell to Zsh!"
-        success "Zsh is now the default shell for $TARGET_USER!"
-        info "You'll need to log out and back in for the shell change to take effect."
+    if [[ -n "$PATH_LINES" ]]; then
+        # Add a section header to .zshrc
+        su - "$TARGET_USER" -c "echo '# PATH variables transferred from .bashrc' >> ~/.zshrc"
+        su - "$TARGET_USER" -c "echo '$PATH_LINES' >> ~/.zshrc"
+        
+        # Also transfer common environment variables
+        ENV_VARS=$(su - "$TARGET_USER" -c "grep -E 'export (JAVA|ANDROID|NODE|NVM|PYENV|GOPATH|FLUTTER)' ~/.bashrc" || true)
+        if [[ -n "$ENV_VARS" ]]; then
+            su - "$TARGET_USER" -c "echo '# Environment variables transferred from .bashrc' >> ~/.zshrc"
+            su - "$TARGET_USER" -c "echo '$ENV_VARS' >> ~/.zshrc"
+        fi
+        
+        success "PATH and environment variables transferred to .zshrc!"
     fi
     
-    success "Zsh with Oh My Zsh has been installed successfully!"
+    # Add CHROME_EXECUTABLE for Flutter to use Brave Browser
+    if ! su - "$TARGET_USER" -c "grep -q 'CHROME_EXECUTABLE' ~/.zshrc"; then
+        info "Adding CHROME_EXECUTABLE to .zshrc for Flutter web development..."
+        su - "$TARGET_USER" -c "echo '# Set Chrome executable for Flutter web development' >> ~/.zshrc"
+        su - "$TARGET_USER" -c "echo 'export CHROME_EXECUTABLE=/usr/bin/brave-browser' >> ~/.zshrc"
+        success "Added CHROME_EXECUTABLE to .zshrc for Flutter web development!"
+    fi
 fi
 
 success "All setup complete! Please reboot your system to apply all changes."
