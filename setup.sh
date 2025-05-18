@@ -198,6 +198,14 @@ systemctl daemon-reexec
 systemctl enable --now systemd-zram-setup@zram0.service
 systemctl restart systemd-zram-setup@zram0.service
 
+# Spicetify Setup
+read -p "Install Spotify with Spicetify? (y/N): " install_spicetify
+if [[ "$install_spicetify" =~ ^[Yy]$ ]]; then
+    info "Setting up Spotify with Spicetify..."
+    bash "$(dirname "$0")/setup_spicetify.sh" || warn "Spicetify setup failed!"
+    success "Spotify with Spicetify setup completed!"
+fi
+
 # Download Nerd Fonts
 read -p "Install FiraCode Nerd Font? (y/N): " install_nerd_fonts
 if [[ "$install_nerd_fonts" =~ ^[Yy]$ ]]; then
