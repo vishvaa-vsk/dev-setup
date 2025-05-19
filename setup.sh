@@ -202,7 +202,8 @@ systemctl restart systemd-zram-setup@zram0.service
 read -p "Install Spotify with Spicetify? (y/N): " install_spicetify
 if [[ "$install_spicetify" =~ ^[Yy]$ ]]; then
     info "Setting up Spotify with Spicetify..."
-    bash "$(dirname "$0")/setup_spicetify.sh" || warn "Spicetify setup failed!"
+    SCRIPT_DIR="$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)"
+    bash "$SCRIPT_DIR/setup_spicetify.sh" || warn "Spicetify setup failed!"
     success "Spotify with Spicetify setup completed!"
 fi
 
