@@ -30,7 +30,7 @@ chown "$ACTUAL_USER:$(id -gn "$ACTUAL_USER")" "$SCRIPTS_DIR"
 # Download all required scripts directly to the scripts directory
 info "Downloading setup scripts..."
 BASE_URL="https://raw.githubusercontent.com/vishvaa-vsk/dev-setup/main"
-SCRIPTS=("setup.sh" "setup_android_dev.sh" "setup_node_dev.sh" "setup_python_dev.sh")
+SCRIPTS=("setup.sh" "setup_android_dev.sh" "setup_node_dev.sh" "setup_python_dev.sh" "setup_spicetify.sh")
 
 cd "$SCRIPTS_DIR"
 
