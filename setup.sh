@@ -239,25 +239,28 @@ fi
 # Transfer PATH variables from .bashrc to .zshrc if Zsh is installed
 if [[ -f "/home/$TARGET_USER/.zshrc" ]]; then
     info "Transferring PATH variables from .bashrc to .zshrc..."
-    
-    # Extract PATH-related lines from .bashrc
-    PATH_LINES=$(su - "$TARGET_USER" -c "grep -E 'export PATH=|PATH=|\\\$PATH' ~/.bashrc" || true)
-    
+
+    # Extract PATH-related lines from .bashrc and append them safely
+    PATH_LINES=$(su - "$TARGET_USER" -c "grep -E 'export PATH=|PATH=|\\$PATH' ~/.bashrc" || true)
+
     if [[ -n "$PATH_LINES" ]]; then
-        # Add a section header to .zshrc
         su - "$TARGET_USER" -c "echo '# PATH variables transferred from .bashrc' >> ~/.zshrc"
-        su - "$TARGET_USER" -c "echo '$PATH_LINES' >> ~/.zshrc"
-        
-        # Also transfer common environment variables
+        while IFS= read -r line; do
+            su - "$TARGET_USER" -c "echo \"$line\" >> ~/.zshrc"
+        done <<< "$PATH_LINES"
+
+        # Also transfer common environment variables safely
         ENV_VARS=$(su - "$TARGET_USER" -c "grep -E 'export (JAVA|ANDROID|NODE|NVM|PYENV|GOPATH|FLUTTER)' ~/.bashrc" || true)
         if [[ -n "$ENV_VARS" ]]; then
             su - "$TARGET_USER" -c "echo '# Environment variables transferred from .bashrc' >> ~/.zshrc"
-            su - "$TARGET_USER" -c "echo '$ENV_VARS' >> ~/.zshrc"
+            while IFS= read -r line; do
+                su - "$TARGET_USER" -c "echo \"$line\" >> ~/.zshrc"
+            done <<< "$ENV_VARS"
         fi
-        
+
         success "PATH and environment variables transferred to .zshrc!"
     fi
-    
+
     # Add CHROME_EXECUTABLE for Flutter to use Brave Browser
     if ! su - "$TARGET_USER" -c "grep -q 'CHROME_EXECUTABLE' ~/.zshrc"; then
         info "Adding CHROME_EXECUTABLE to .zshrc for Flutter web development..."

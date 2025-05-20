@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+#set -euo pipefail
 
 # For most (if not all) Linux distros, there is no official repository package available to install Android Studio
 # and still get regular updates. This bash script automatically downloads and installs the latest version.
