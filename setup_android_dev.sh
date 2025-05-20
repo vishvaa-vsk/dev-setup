@@ -133,6 +133,28 @@ tar -xzf "$ANDROID_STUDIO_FILE" -C "$ANDROID_STUDIO_DIR" --strip-components=1
 launcher="$ANDROID_STUDIO_DIR/bin/studio"
 chmod +x "$launcher"
 
+# Create Android Studio desktop entry for GNOME
+DESKTOP_FILE="$HOME/.local/share/applications/android-studio.desktop"
+ICON_PATH="$ANDROID_STUDIO_DIR/bin/studio.png"
+if [ ! -f "$ICON_PATH" ]; then
+    # Fallback to a generic icon if studio.png does not exist
+    ICON_PATH="idea"
+fi
+cat > "$DESKTOP_FILE" <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Android Studio
+Icon=$ICON_PATH
+Exec=$ANDROID_STUDIO_DIR/bin/studio %f
+Comment=Android Studio IDE
+Categories=Development;IDE;
+Terminal=false
+StartupNotify=true
+EOF
+update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+info "Android Studio desktop entry created. You may need to log out and log in again to see the icon in your applications menu."
+
 success "Android Studio has been installed."
 info "You can start it with: $launcher"
 
@@ -179,6 +201,29 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
         "$launcher" &
         # Wait for user to indicate they're done with Android Studio setup
         read -p "Press Enter after you have completed Android Studio setup and closed it..." -r
+    fi
+fi
+
+# Add ANDROID_HOME and update PATH for Android SDK
+ANDROID_SDK_DIR="$HOME/Android"
+if [ -d "$ANDROID_SDK_DIR" ]; then
+    # Add to .bashrc
+    if [ -f "$HOME/.bashrc" ]; then
+        if ! grep -q "ANDROID_HOME" "$HOME/.bashrc"; then
+            echo -e "\n# Android SDK" >> "$HOME/.bashrc"
+            echo "export ANDROID_HOME=\"$ANDROID_SDK_DIR\"" >> "$HOME/.bashrc"
+            echo "export PATH=\"\$ANDROID_HOME/emulator:\$ANDROID_HOME/tools:\$ANDROID_HOME/tools/bin:\$ANDROID_HOME/platform-tools:\$PATH\"" >> "$HOME/.bashrc"
+            info "Added ANDROID_HOME and Android SDK tools to PATH in .bashrc"
+        fi
+    fi
+    # Add to .zshrc
+    if [ -f "$HOME/.zshrc" ]; then
+        if ! grep -q "ANDROID_HOME" "$HOME/.zshrc"; then
+            echo -e "\n# Android SDK" >> "$HOME/.zshrc"
+            echo "export ANDROID_HOME=\"$ANDROID_SDK_DIR\"" >> "$HOME/.zshrc"
+            echo "export PATH=\"\$ANDROID_HOME/emulator:\$ANDROID_HOME/tools:\$ANDROID_HOME/tools/bin:\$ANDROID_HOME/platform-tools:\$PATH\"" >> "$HOME/.zshrc"
+            info "Added ANDROID_HOME and Android SDK tools to PATH in .zshrc"
+        fi
     fi
 fi
 
