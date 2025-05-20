@@ -1,5 +1,4 @@
 #!/bin/bash
-#set -euo pipefail
 
 # For most (if not all) Linux distros, there is no official repository package available to install Android Studio
 # and still get regular updates. This bash script automatically downloads and installs the latest version.
@@ -24,7 +23,7 @@ printf "\n========================================================\n"
 info "Installing required dependencies for Android development..."
 
 # Try to install all potentially needed packages
-dnf install -y --skip-unavailable clang cmake ninja-build libgtk-3-dev curl git wget unzip xz zip mesa-libGLU glibc glibc.i686 \
+dnf install -y --skip-unavailable clang cmake ninja-build gtk3-devel egl-utils curl git wget unzip xz zip mesa-demos mesa-libGLU glibc glibc.i686 \
     libstdc++ libstdc++.i686 bzip2-libs zlib.i686 glibc-devel.i686 glibc-minimal-langpack.i686 2>/dev/null || true
 
 success "Dependencies installation completed."
@@ -173,11 +172,14 @@ printf 'export PATH="$FLUTTER_DIR/bin:$PATH"\n\n'
 read -p "Would you like to run Android Studio first-time setup now? (y/N) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    info "Launching Android Studio. Please complete the setup wizard."
-    "$launcher" &
-    
-    # Wait for user to indicate they're done with Android Studio setup
-    read -p "Press Enter after you have completed Android Studio setup and closed it..." -r
+    if [ -z "$DISPLAY" ]; then
+        warn "No graphical environment detected. Please run Android Studio from a terminal inside your desktop session."
+    else
+        info "Launching Android Studio. Please complete the setup wizard."
+        "$launcher" &
+        # Wait for user to indicate they're done with Android Studio setup
+        read -p "Press Enter after you have completed Android Studio setup and closed it..." -r
+    fi
 fi
 
 # Run Flutter doctor if requested
