@@ -107,11 +107,21 @@ fi
 # Download phase
 info "Downloading packages..."
 
-info "Downloading Android Studio ($version)..."
-wget -O "$ANDROID_STUDIO_FILE" "$ANDROID_STUDIO_URL" -q --show-progress
+# Android Studio
+if [ -f "$ANDROID_STUDIO_FILE" ] && [ -s "$ANDROID_STUDIO_FILE" ]; then
+    info "Android Studio archive already exists at $ANDROID_STUDIO_FILE, skipping download."
+else
+    info "Downloading Android Studio ($version)..."
+    wget -O "$ANDROID_STUDIO_FILE" "$ANDROID_STUDIO_URL" -q --show-progress
+fi
 
-info "Downloading Flutter SDK..."
-wget -O "$FLUTTER_FILE" "$FLUTTER_URL" -q --show-progress
+# Flutter SDK
+if [ -f "$FLUTTER_FILE" ] && [ -s "$FLUTTER_FILE" ]; then
+    info "Flutter SDK archive already exists at $FLUTTER_FILE, skipping download."
+else
+    info "Downloading Flutter SDK..."
+    wget -O "$FLUTTER_FILE" "$FLUTTER_URL" -q --show-progress
+fi
 
 # Installation phase
 info "Installing packages..."
